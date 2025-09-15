@@ -39,8 +39,13 @@ configurations {
 
 // --- Dependencies ---
 dependencies {
-    copyLibsConfig "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${rootProject.ext.clientVersion}"
+    // Paho MQTT client
+    implementation "org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5"
+
+    // Legacy support library
     implementation "androidx.legacy:legacy-support-v4:1.0.0"
+
+    // Local jar files
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 }
 
