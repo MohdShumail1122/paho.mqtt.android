@@ -44,7 +44,7 @@ task generateSourcesJar(type: Jar) {
 
 // Copy the Paho Java client into the libs directory
 task copyLibs(type: Copy) {
-    from configurations.implementation
+    from configurations.runtimeClasspath // <-- use runtimeClasspath, not implementation
     into 'libs'
     include 'org.eclipse.paho*'
 }
@@ -53,14 +53,15 @@ task copyLibs(type: Copy) {
 task renameReleaseAAR(type: Copy) {
     from("$buildDir/outputs/aar")
     into("$buildDir/outputs/aar/")
-    include('org.eclipse.paho.android.service-debug.aar')
-    rename('org.eclipse.paho.android.service-debug.aar',
+    include('org.eclipse.paho.android.service-release.aar') // use release variant
+    rename('org.eclipse.paho.android.service-release.aar',
             "${rootProject.ext.serviceArchivesBaseName}-${rootProject.ext.serviceVersion}.aar")
 }
 
 // Generate Plain Jar Version of library
 task generateLibraryJar(type: Jar) {
-    from("$buildDir/intermediates/javac/release/classes") // updated path for Gradle 7+
+    from("$buildDir/intermediates/javac/release/classes") // Gradle 7+
+    archiveClassifier.set('classes')
 }
 
 // Generate Javadoc Jar
@@ -97,7 +98,7 @@ publishing {
 
 // Debug dependencies
 tasks.register("debugDeps") {
-    doLast { configurations.implementation.each { println it } }
+    doLast { configurations.runtimeClasspath.each { println it } }
 }
 
 // Wire tasks correctly instead of using execute()
