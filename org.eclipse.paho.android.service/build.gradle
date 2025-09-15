@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         minSdkVersion 9
-        targetSdkVersion 33 // updated
+        targetSdkVersion 33
         testApplicationId "org.eclipse.paho.android.service.test"
     }
 
@@ -18,8 +18,6 @@ android {
         }
     }
 
-    // dexOptions removed (deprecated)
-    
     lint {
         abortOnError false
     }
@@ -44,15 +42,14 @@ task generateSourcesJar(type: Jar) {
     archiveClassifier.set('sources')
 }
 
-// Copy the Paho Java client into the libs directory to bundle it with the AAR
+// Copy the Paho Java client into the libs directory
 task copyLibs(type: Copy) {
-    println "Copying MQTT Jar into libs directory"
     from configurations.implementation
     into 'libs'
     include 'org.eclipse.paho*'
 }
 
-// Rename the Release AAR file to Maven convention
+// Rename Release AAR to Maven convention
 task renameReleaseAAR(type: Copy) {
     from("$buildDir/outputs/aar")
     into("$buildDir/outputs/aar/")
@@ -61,14 +58,24 @@ task renameReleaseAAR(type: Copy) {
             "${rootProject.ext.serviceArchivesBaseName}-${rootProject.ext.serviceVersion}.aar")
 }
 
-// Generate Plain Jar Version of library (legacy)
+// Generate Plain Jar Version of library
 task generateLibraryJar(type: Jar) {
-    from("$buildDir/intermediates/classes/release")
+    from("$buildDir/intermediates/javac/release/classes") // updated path for Gradle 7+
 }
 
 // Generate Javadoc Jar
 task generateJavaDocJar(type: Jar) {
-    dependsOn android.libraryVariants.release.javaCompileProvider
+    doFirst {
+        android.libraryVariants.all { variant ->
+            if (variant.buildType.name == 'release') {
+                def javaCompileTask = variant.javaCompileProvider.get()
+                javaCompileTask.options.compilerArgs += ['-Xdoclint:none']
+                javaCompileTask.doLast {
+                    println "Javadoc generation ready for ${variant.name}"
+                }
+            }
+        }
+    }
     from("$buildDir/docs/javadoc")
     archiveClassifier.set('javadoc')
 }
@@ -94,21 +101,17 @@ publishing {
                 }
             }
         } else {
-            maven {
-                url = uri("$buildDir/repo")
-            }
+            maven { url = uri("$buildDir/repo") }
         }
     }
 }
 
-// Debug task to print dependencies
+// Debug dependencies
 tasks.register("debugDeps") {
-    doLast {
-        configurations.implementation.each { println it }
-    }
+    doLast { configurations.implementation.each { println it } }
 }
 
-// Ensure libs are copied and AAR renamed after build
+// Copy libs and rename AAR after build
 tasks.named('clean') {
     doFirst { delete 'libs' }
     doLast { tasks.named('copyLibs').get().execute() }
