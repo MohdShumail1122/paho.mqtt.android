@@ -5,11 +5,11 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
-        applicationId rootProject.ext.sampleArchivesBaseName
+        applicationId "paho.mqtt.java.example"
         minSdkVersion 16
         targetSdkVersion 33  // updated targetSdkVersion
         versionCode 1
-        versionName "0.1"
+        versionName "1.0"
     }
 
     buildTypes {
@@ -19,12 +19,10 @@ android {
         }
     }
 
-    // Updated lint options
+    // dexOptions removed, obsolete in Gradle 7+
     lint {
         abortOnError false
     }
-
-    // Removed dexOptions (deprecated)
 }
 
 repositories {
@@ -35,19 +33,21 @@ repositories {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation "androidx.recyclerview:recyclerview:1.3.1"
+    implementation fileTree(dir: 'libs', include: ['*.jar'], exclude: ["org.eclipse.paho.client.mqttv3-${rootProject.ext.clientVersion}.jar"])
+    testImplementation 'junit:junit:4.12'
+
+    implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:design:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:recyclerview-v7:${rootProject.ext.supportLibVersion}"
     implementation "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${rootProject.ext.clientVersion}"
-    implementation project(':org.eclipse.paho.android.service')
+
+    implementation project(':org.eclipse.paho.android.service') {
+        //transitive = true
+        //exclude module: "org.eclipse.paho.client.mqttv3"  // optional if you want to exclude duplicate
+    }
 }
 
-// Optional: Copy APK task
-task publishAPK(type: Copy) {
-    from file("${project.buildDir}/outputs/apk/debug/${rootProject.ext.sampleArchivesBaseName}-debug.apk")
-    into "/shared/technology/paho/Android/${rootProject.ext.sampleVersion}/debug/"
-}
-
-// Optional: Print all resolved implementation dependencies
+// Print all resolved compile dependencies (optional)
 tasks.register("debugDeps") {
     doLast {
         configurations.implementation.each { println it }
