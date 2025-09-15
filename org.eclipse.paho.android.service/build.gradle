@@ -31,10 +31,12 @@ repositories {
 }
 
 dependencies {
-    implementation "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${rootProject.ext.clientVersion}"
-    implementation "androidx.legacy:legacy-support-v4:${rootProject.ext.supportLibVersion}"
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    // Create a separate configuration for copying jars
+    copyLibsConfig "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${rootProject.ext.clientVersion}"
 }
+
+
+
 
 // Generate Sources Jar
 task generateSourcesJar(type: Jar) {
@@ -43,10 +45,8 @@ task generateSourcesJar(type: Jar) {
 }
 
 // Copy the Paho Java client into the libs directory
-task copyLibs(type: Copy) {
-    from configurations.runtimeClasspath // <-- use runtimeClasspath, not implementation
-    into 'libs'
-    include 'org.eclipse.paho*'
+configurations {
+    copyLibsConfig
 }
 
 // Rename Release AAR to Maven convention
