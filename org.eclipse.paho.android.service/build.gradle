@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
+// --- Android setup ---
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -23,6 +24,7 @@ android {
     }
 }
 
+// --- Repositories ---
 repositories {
     google()
     mavenCentral()
@@ -30,32 +32,31 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 
-dependencies {
-    // Create a separate configuration for copying jars
-    copyLibsConfig "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${rootProject.ext.clientVersion}"
+// --- Configurations ---
+configurations {
+    copyLibsConfig
 }
 
+// --- Dependencies ---
+dependencies {
+    copyLibsConfig "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${rootProject.ext.clientVersion}"
+    implementation "androidx.legacy:legacy-support-v4:${rootProject.ext.supportLibVersion}"
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+}
 
+// --- Tasks ---
 
+// Copy the Paho Java client into the libs directory
+task copyLibs(type: Copy) {
+    from configurations.copyLibsConfig
+    into 'libs'
+    include 'org.eclipse.paho*'
+}
 
 // Generate Sources Jar
 task generateSourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
     archiveClassifier.set('sources')
-}
-
-// Copy the Paho Java client into the libs directory
-configurations {
-    copyLibsConfig
-}
-
-// Rename Release AAR to Maven convention
-task renameReleaseAAR(type: Copy) {
-    from("$buildDir/outputs/aar")
-    into("$buildDir/outputs/aar/")
-    include('org.eclipse.paho.android.service-release.aar') // use release variant
-    rename('org.eclipse.paho.android.service-release.aar',
-            "${rootProject.ext.serviceArchivesBaseName}-${rootProject.ext.serviceVersion}.aar")
 }
 
 // Generate Plain Jar Version of library
@@ -70,6 +71,16 @@ task generateJavaDocJar(type: Jar) {
     archiveClassifier.set('javadoc')
 }
 
+// Rename Release AAR to Maven convention
+task renameReleaseAAR(type: Copy) {
+    from("$buildDir/outputs/aar")
+    into("$buildDir/outputs/aar/")
+    include('org.eclipse.paho.android.service-release.aar')
+    rename('org.eclipse.paho.android.service-release.aar',
+            "${rootProject.ext.serviceArchivesBaseName}-${rootProject.ext.serviceVersion}.aar")
+}
+
+// --- Publishing ---
 publishing {
     publications {
         paho(MavenPublication) {
@@ -96,12 +107,12 @@ publishing {
     }
 }
 
-// Debug dependencies
+// --- Debug dependencies ---
 tasks.register("debugDeps") {
-    doLast { configurations.runtimeClasspath.each { println it } }
+    doLast { configurations.copyLibsConfig.each { println it } }
 }
 
-// Wire tasks correctly instead of using execute()
+// --- Wire tasks ---
 tasks.named('assemble') {
     dependsOn copyLibs
     finalizedBy renameReleaseAAR
