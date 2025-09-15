@@ -7,15 +7,13 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:7.4.2"
+        classpath "com.android.tools.build:gradle:7.4.2" // updated
     }
 }
 
-ext{
-
-    compileSdkVersion = 24
-    buildToolsVersion = '23.0.3'
-
+ext {
+    compileSdkVersion = 33
+    buildToolsVersion = '33.0.2'
 
     group = 'org.eclipse.paho'
 
@@ -30,7 +28,6 @@ ext{
     mavenUrl = "https://repo.eclipse.org/content/repositories/paho-releases/"
 
     supportLibVersion = '24.2.1'
-
 }
 
 def getSdkDirFromLocalProperties() {
@@ -43,25 +40,23 @@ def getSdkDirFromLocalProperties() {
     properties.getProperty('sdk.dir')
 }
 
-
 def androidHome = System.env['ANDROID_HOME']
-
 def androidHomeIsDefined = androidHome?.trim()
-
 def sdkDir = androidHomeIsDefined ? androidHome : getSdkDirFromLocalProperties()
-
 println "SDK dir: $sdkDir"
 
-
 allprojects {
-
     repositories {
-        jcenter()
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+        // Removed jcenter()
         maven {
             url "file://$sdkDir/extras/android/m2repository/"
         }
     }
 
+    // default version & group for submodules
     version = rootProject.ext.serviceVersion
     group = rootProject.ext.group
 }
