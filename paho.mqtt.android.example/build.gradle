@@ -7,43 +7,49 @@ android {
     defaultConfig {
         applicationId "paho.mqtt.java.example"
         minSdkVersion 16
-        targetSdkVersion 24
+        targetSdkVersion 33  // updated targetSdkVersion
         versionCode 1
         versionName "1.0"
     }
+
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    dexOptions {
-        preDexLibraries = false
-    }
-    lintOptions {
+
+    // dexOptions removed, obsolete in Gradle 7+
+    lint {
         abortOnError false
     }
 }
 
 repositories {
+    google()
+    mavenCentral()
     maven { url rootProject.ext.mavenUrl }
+    maven { url "https://jitpack.io" }
 }
 
-
 dependencies {
-    compile fileTree(dir: 'libs', excludes: ["org.eclipse.paho.client.mqttv3-${rootProject.ext.clientVersion}.jar"], include: '*.jar')
-    testCompile 'junit:junit:4.12'
-    compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
-    compile "com.android.support:design:${rootProject.ext.supportLibVersion}"
-    compile "com.android.support:recyclerview-v7:${rootProject.ext.supportLibVersion}"
-    compile "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${rootProject.ext.clientVersion}"
-    compile (project(':org.eclipse.paho.android.service')){
-        //exclude module: "org.eclipse.paho.client.mqttv3"
-        transitive=true
+    implementation fileTree(dir: 'libs', include: ['*.jar'], exclude: ["org.eclipse.paho.client.mqttv3-${rootProject.ext.clientVersion}.jar"])
+    testImplementation 'junit:junit:4.12'
+
+    implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:design:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:recyclerview-v7:${rootProject.ext.supportLibVersion}"
+    implementation "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${rootProject.ext.clientVersion}"
+
+    implementation project(':org.eclipse.paho.android.service') {
+        transitive = true
+        //exclude module: "org.eclipse.paho.client.mqttv3"  // optional if you want to exclude duplicate
     }
 }
 
-configurations.compile.exclude module: 'org.eclipse.paho.client.mqttv3'
-task debug << {
-    configurations.compile.each { println it}
+// Print all resolved compile dependencies (optional)
+tasks.register("debugDeps") {
+    doLast {
+        configurations.implementation.each { println it }
+    }
 }
