@@ -65,17 +65,6 @@ task generateLibraryJar(type: Jar) {
 
 // Generate Javadoc Jar
 task generateJavaDocJar(type: Jar) {
-    doFirst {
-        android.libraryVariants.all { variant ->
-            if (variant.buildType.name == 'release') {
-                def javaCompileTask = variant.javaCompileProvider.get()
-                javaCompileTask.options.compilerArgs += ['-Xdoclint:none']
-                javaCompileTask.doLast {
-                    println "Javadoc generation ready for ${variant.name}"
-                }
-            }
-        }
-    }
     from("$buildDir/docs/javadoc")
     archiveClassifier.set('javadoc')
 }
@@ -111,12 +100,12 @@ tasks.register("debugDeps") {
     doLast { configurations.implementation.each { println it } }
 }
 
-// Copy libs and rename AAR after build
-tasks.named('clean') {
-    doFirst { delete 'libs' }
-    doLast { tasks.named('copyLibs').get().execute() }
+// Wire tasks correctly instead of using execute()
+tasks.named('assemble') {
+    dependsOn copyLibs
+    finalizedBy renameReleaseAAR
 }
 
-tasks.named('assemble') {
-    doLast { tasks.named('renameReleaseAAR').get().execute() }
+tasks.named('clean') {
+    doFirst { delete 'libs' }
 }
